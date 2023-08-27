@@ -16,7 +16,13 @@ module.exports.getUserById = (req, res) => {
       }
       res.status(200).send({ data: user });
     })
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    // eslint-disable-next-line consistent-return
+    .catch((error) => {
+      if (error.name === 'CastError') {
+        return res.status(400).send({ message: 'Некорректный формат ID пользователя' });
+      }
+      res.status(500).send({ message: 'Произошла ошибка' });
+    });
 };
 
 module.exports.createUser = (req, res) => {
@@ -24,7 +30,7 @@ module.exports.createUser = (req, res) => {
 
   User.create({ name, about, avatar })
     .then((user) => res.status(201).send({ data: user }))
-    .catch(() => res.status(400).send({ message: 'Переданы некорректные данные' }));
+    .catch(() => res.status(500).send({ message: 'Переданы некорректные данные' }));
 };
 
 module.exports.updateProfile = (req, res) => {
@@ -43,7 +49,13 @@ module.exports.updateProfile = (req, res) => {
       }
       res.status(200).send({ data: updatedUser });
     })
-    .catch(() => res.status(400).send({ message: 'Переданы некорректные данные' }));
+    // eslint-disable-next-line consistent-return
+    .catch((error) => {
+      if (error.name === 'CastError') {
+        return res.status(400).send({ message: 'Некорректный формат ID пользователя' });
+      }
+      res.status(500).send({ message: 'Переданы некорректные данные' });
+    });
 };
 
 module.exports.updateAvatar = (req, res) => {
@@ -62,5 +74,11 @@ module.exports.updateAvatar = (req, res) => {
       }
       res.status(200).send({ data: updatedUser });
     })
-    .catch(() => res.status(400).send({ message: 'Переданы некорректные данные' }));
+    // eslint-disable-next-line consistent-return
+    .catch((error) => {
+      if (error.name === 'CastError') {
+        return res.status(400).send({ message: 'Некорректный формат ID пользователя' });
+      }
+      res.status(500).send({ message: 'Переданы некорректные данные' });
+    });
 };

@@ -30,12 +30,19 @@ module.exports.deleteCard = (req, res) => {
       }
       return res.status(200).send({ data: card });
     })
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    .catch((error) => {
+      if (error.name === 'CastError') {
+        return res.status(400).send({ message: 'Некорректный формат ID карточки' });
+      }
+      return res.status(500).send({ message: 'Произошла ошибка' });
+    });
 };
 
 module.exports.likeCard = (req, res) => {
+  const { cardId } = req.params;
+
   Card.findByIdAndUpdate(
-    req.params.cardId,
+    cardId,
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
@@ -46,12 +53,19 @@ module.exports.likeCard = (req, res) => {
       }
       return res.send({ data: card });
     })
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    .catch((error) => {
+      if (error.name === 'CastError') {
+        return res.status(400).send({ message: 'Некорректный формат ID карточки' });
+      }
+      return res.status(500).send({ message: 'Произошла ошибка' });
+    });
 };
 
 module.exports.dislikeCard = (req, res) => {
+  const { cardId } = req.params;
+
   Card.findByIdAndUpdate(
-    req.params.cardId,
+    cardId,
     { $pull: { likes: req.user._id } },
     { new: true },
   )
@@ -62,5 +76,10 @@ module.exports.dislikeCard = (req, res) => {
       }
       return res.send({ data: card });
     })
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    .catch((error) => {
+      if (error.name === 'CastError') {
+        return res.status(400).send({ message: 'Некорректный формат ID карточки' });
+      }
+      return res.status(500).send({ message: 'Произошла ошибка' });
+    });
 };
