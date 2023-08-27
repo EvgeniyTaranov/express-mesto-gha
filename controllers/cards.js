@@ -20,14 +20,8 @@ module.exports.createCard = (req, res) => {
     .catch(() => res.status(400).send({ message: 'Ошибка при создании карточки' }));
 };
 
-// eslint-disable-next-line consistent-return
 module.exports.deleteCard = (req, res) => {
   const { cardId } = req.params;
-
-  // eslint-disable-next-line no-undef
-  if (!mongoose.Types.ObjectId.isValid(cardId)) {
-    return res.status(400).send({ message: 'Некорректный формат идентификатора карточки' });
-  }
 
   Card.findByIdAndRemove(cardId)
     .then((card) => {
@@ -39,17 +33,9 @@ module.exports.deleteCard = (req, res) => {
     .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
 };
 
-// eslint-disable-next-line consistent-return
 module.exports.likeCard = (req, res) => {
-  const { cardId } = req.params;
-
-  // eslint-disable-next-line no-undef
-  if (!mongoose.Types.ObjectId.isValid(cardId)) {
-    return res.status(400).send({ message: 'Некорректный формат идентификатора карточки' });
-  }
-
   Card.findByIdAndUpdate(
-    cardId,
+    req.params.cardId,
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
@@ -63,17 +49,9 @@ module.exports.likeCard = (req, res) => {
     .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
 };
 
-// eslint-disable-next-line consistent-return
 module.exports.dislikeCard = (req, res) => {
-  const { cardId } = req.params;
-
-  // eslint-disable-next-line no-undef
-  if (!mongoose.Types.ObjectId.isValid(cardId)) {
-    return res.status(400).send({ message: 'Некорректный формат идентификатора карточки' });
-  }
-
   Card.findByIdAndUpdate(
-    cardId,
+    req.params.cardId,
     { $pull: { likes: req.user._id } },
     { new: true },
   )
