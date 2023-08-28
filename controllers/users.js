@@ -18,11 +18,19 @@ module.exports.getUserById = (req, res) => {
     })
     // eslint-disable-next-line consistent-return
     .catch((error) => {
-      if (error.name === 'CastError') {
-        return res.status(400).send({ message: 'Некорректный формат ID пользователя' });
+      if (error.name === 'CastError' || error.name === 'ValidationError') {
+        return res.status(400).send({ message: 'Некорректные данные или ID пользователя' });
       }
       res.status(500).send({ message: 'Произошла ошибка' });
     });
+};
+
+const handleValidationError = (res) => {
+  res.status(400).send({ message: 'Переданы некорректные данные' });
+};
+
+const handleUserNotFound = (res) => {
+  res.status(404).send({ message: 'Пользователь не найден' });
 };
 
 module.exports.createUser = (req, res) => {
@@ -30,7 +38,13 @@ module.exports.createUser = (req, res) => {
 
   User.create({ name, about, avatar })
     .then((user) => res.status(201).send({ data: user }))
-    .catch(() => res.status(500).send({ message: 'Переданы некорректные данные' }));
+    .catch((error) => {
+      if (error.name === 'ValidationError') {
+        handleValidationError(res);
+      } else {
+        res.status(500).send({ message: 'Произошла ошибка' });
+      }
+    });
 };
 
 module.exports.updateProfile = (req, res) => {
@@ -42,19 +56,19 @@ module.exports.updateProfile = (req, res) => {
     { name, about },
     { new: true, runValidators: true },
   )
-    // eslint-disable-next-line consistent-return
     .then((updatedUser) => {
       if (!updatedUser) {
-        return res.status(404).send({ message: 'Пользователь не найден' });
+        handleUserNotFound(res);
+      } else {
+        res.status(200).send({ data: updatedUser });
       }
-      res.status(200).send({ data: updatedUser });
     })
-    // eslint-disable-next-line consistent-return
     .catch((error) => {
-      if (error.name === 'CastError') {
-        return res.status(400).send({ message: 'Некорректный формат ID пользователя' });
+      if (error.name === 'ValidationError' || error.name === 'CastError') {
+        handleValidationError(res);
+      } else {
+        res.status(500).send({ message: 'Произошла ошибка' });
       }
-      res.status(500).send({ message: 'Переданы некорректные данные' });
     });
 };
 
@@ -67,18 +81,18 @@ module.exports.updateAvatar = (req, res) => {
     { avatar },
     { new: true, runValidators: true },
   )
-    // eslint-disable-next-line consistent-return
     .then((updatedUser) => {
       if (!updatedUser) {
-        return res.status(404).send({ message: 'Пользователь не найден' });
+        handleUserNotFound(res);
+      } else {
+        res.status(200).send({ data: updatedUser });
       }
-      res.status(200).send({ data: updatedUser });
     })
-    // eslint-disable-next-line consistent-return
     .catch((error) => {
-      if (error.name === 'CastError') {
-        return res.status(400).send({ message: 'Некорректный формат ID пользователя' });
+      if (error.name === 'ValidationError' || error.name === 'CastError') {
+        handleValidationError(res);
+      } else {
+        res.status(500).send({ message: 'Произошла ошибка' });
       }
-      res.status(500).send({ message: 'Переданы некорректные данные' });
     });
 };
