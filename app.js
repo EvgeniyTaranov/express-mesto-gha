@@ -2,6 +2,9 @@ const express = require('express');
 const mongoose = require('mongoose');
 const userRouter = require('./routes/users');
 const cardRouter = require('./routes/cards');
+const errorHandler = require('./middlewares/errorHandler');
+const auth = require('./middlewares/auth'); // Импорт мидлвэра для авторизации
+const { login, createUser } = require('./controllers/users'); // Импорт контроллеров
 
 const { PORT = 3000 } = process.env;
 
@@ -13,26 +16,17 @@ mongoose.connect('mongodb://0.0.0.0:27017/mestodb', {
 
 app.use(express.json());
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: '64eb5cb6c738cce165f40a8d',
-  };
-
-  next();
-});
-
 app.use('/users', userRouter);
 app.use('/cards', cardRouter);
 
-app.use((err, req, res, next) => {
-  if (err.name === 'ValidationError') {
-    return res.status(400).send({ message: err.message });
-  }
-  return next(err);
-});
+// Обработчики для /signin и /signup
+app.post('/signin', login);
+app.post('/signup', createUser);
+
+// Мидлвэр для авторизации
+app.use(auth);
+
+app.use(errorHandler);
 
 app.listen(PORT, () => {
 });
-
-module.exports.createCard = () => {
-};
