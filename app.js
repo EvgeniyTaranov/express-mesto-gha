@@ -16,15 +16,15 @@ mongoose.connect('mongodb://0.0.0.0:27017/mestodb', {
 
 app.use(express.json());
 
+// Мидлвэр для авторизации
+app.use(auth);
+
 app.use('/users', userRouter);
 app.use('/cards', cardRouter);
 
 // Обработчики для /signin и /signup
 app.post('/signin', login);
 app.post('/signup', createUser);
-
-// Мидлвэр для авторизации
-app.use(auth);
 
 app.use(errorHandler);
 

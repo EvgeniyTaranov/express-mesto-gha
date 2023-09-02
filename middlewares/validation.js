@@ -20,7 +20,7 @@ module.exports.validateSignin = celebrate({
 
 module.exports.validateUserId = celebrate({
   [Segments.PARAMS]: Joi.object().keys({
-    id: Joi.string().hex().length(24),
+    id: Joi.string().hex().length(24).required(),
   }),
 });
 
@@ -40,12 +40,12 @@ module.exports.validateAvatarUpdate = celebrate({
 module.exports.validateCard = celebrate({
   [Segments.BODY]: Joi.object().keys({
     name: Joi.string().required(),
-    link: Joi.string().required().pattern(/^https?:\/\/\S+$/),
+    link: Joi.string().required().uri(),
   }),
 });
 
 module.exports.validateCardId = celebrate({
   [Segments.PARAMS]: Joi.object().keys({
-    cardId: Joi.string().hex().length(24),
+    cardId: Joi.string().hex().length(24).required(),
   }),
 });

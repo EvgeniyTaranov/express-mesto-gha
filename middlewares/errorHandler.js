@@ -1,8 +1,17 @@
+const UnauthorizedError = require('../errors/unauthorizedError');
+const NotFoundError = require('../errors/notFoundError');
+const BadRequestError = require('../errors/badRequestError');
+const ForbiddenError = require('../errors/forbiddenError');
+
 module.exports = (err, req, res) => {
-  if (err.statusCode) {
+  if (err instanceof UnauthorizedError) {
     res.status(err.statusCode).send({ message: err.message });
-  } else if (err.name === 'ValidationError') {
+  } else if (err instanceof NotFoundError) {
+    res.status(err.statusCode).send({ message: err.message });
+  } else if (err instanceof BadRequestError || err.name === 'ValidationError') {
     res.status(400).send({ message: err.message });
+  } else if (err instanceof ForbiddenError) {
+    res.status(err.statusCode).send({ message: err.message });
   } else if (err.name === 'CastError') {
     res.status(400).send({ message: 'Некорректный формат ID' });
   } else if (err.name === 'MongoError' && err.code === 11000) {

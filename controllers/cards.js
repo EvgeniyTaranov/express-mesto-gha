@@ -1,12 +1,15 @@
 const Card = require('../models/card');
+const NotFoundError = require('../errors/notFoundError');
+const BadRequestError = require('../errors/badRequestError');
+const ForbiddenError = require('../errors/forbiddenError');
 
-module.exports.getCards = (req, res) => {
+module.exports.getCards = (req, res, next) => {
   Card.find({})
     .then((cards) => res.status(200).send({ data: cards }))
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    .catch(() => next(new BadRequestError('Произошла ошибка')));
 };
 
-module.exports.createCard = (req, res) => {
+module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
 
   const cardData = {
@@ -17,28 +20,41 @@ module.exports.createCard = (req, res) => {
 
   Card.create(cardData)
     .then((card) => res.status(201).send({ data: card }))
-    .catch(() => res.status(400).send({ message: 'Ошибка при создании карточки' }));
+    .catch(() => next(new BadRequestError('Ошибка при создании карточки')));
 };
 
-module.exports.deleteCard = (req, res) => {
+module.exports.deleteCard = (req, res, next) => {
   const { cardId } = req.params;
 
-  Card.findByIdAndRemove(cardId)
+  Card.findById(cardId)
+    // eslint-disable-next-line consistent-return
     .then((card) => {
       if (!card) {
-        return res.status(404).send({ message: 'Карточка не найдена' });
+        return next(new NotFoundError('Карточка не найдена'));
       }
-      return res.status(200).send({ data: card });
+
+      if (card.owner.toString() !== req.user._id) {
+        return next(new ForbiddenError('Вы не можете удалить чужую карточку'));
+      }
+
+      card.remove()
+        .then(() => res.status(200).send({ data: card }))
+        .catch((error) => {
+          if (error.name === 'CastError') {
+            return next(new BadRequestError('Некорректный формат ID карточки'));
+          }
+          return next(new BadRequestError('Произошла ошибка'));
+        });
     })
     .catch((error) => {
       if (error.name === 'CastError') {
-        return res.status(400).send({ message: 'Некорректный формат ID карточки' });
+        return next(new BadRequestError('Некорректный формат ID карточки'));
       }
-      return res.status(500).send({ message: 'Произошла ошибка' });
+      return next(new BadRequestError('Произошла ошибка'));
     });
 };
 
-module.exports.likeCard = (req, res) => {
+module.exports.likeCard = (req, res, next) => {
   const { cardId } = req.params;
 
   Card.findByIdAndUpdate(
@@ -49,19 +65,19 @@ module.exports.likeCard = (req, res) => {
     .populate('owner')
     .then((card) => {
       if (!card) {
-        return res.status(404).send({ message: 'Карточка не найдена' });
+        return next(new NotFoundError('Карточка не найдена'));
       }
       return res.send({ data: card });
     })
     .catch((error) => {
       if (error.name === 'CastError') {
-        return res.status(400).send({ message: 'Некорректный формат ID карточки' });
+        return next(new BadRequestError('Некорректный формат ID карточки'));
       }
-      return res.status(500).send({ message: 'Произошла ошибка' });
+      return next(new BadRequestError('Произошла ошибка'));
     });
 };
 
-module.exports.dislikeCard = (req, res) => {
+module.exports.dislikeCard = (req, res, next) => {
   const { cardId } = req.params;
 
   Card.findByIdAndUpdate(
@@ -72,14 +88,14 @@ module.exports.dislikeCard = (req, res) => {
     .populate('owner')
     .then((card) => {
       if (!card) {
-        return res.status(404).send({ message: 'Карточка не найдена' });
+        return next(new NotFoundError('Карточка не найдена'));
       }
       return res.send({ data: card });
     })
     .catch((error) => {
       if (error.name === 'CastError') {
-        return res.status(400).send({ message: 'Некорректный формат ID карточки' });
+        return next(new BadRequestError('Некорректный формат ID карточки'));
       }
-      return res.status(500).send({ message: 'Произошла ошибка' });
+      return next(new BadRequestError('Произошла ошибка'));
     });
 };

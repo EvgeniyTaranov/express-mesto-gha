@@ -1,23 +1,36 @@
-// eslint-disable-next-line import/no-extraneous-dependencies
 const jwt = require('jsonwebtoken');
+const UnauthorizedError = require('../errors/unauthorizedError');
+const NotFoundError = require('../errors/notFoundError');
 
 // eslint-disable-next-line consistent-return
 module.exports = (req, res, next) => {
   const { authorization } = req.headers;
 
   if (!authorization || !authorization.startsWith('Bearer ')) {
-    return res.status(401).send({ message: 'Необходима авторизация' });
+    return next(new UnauthorizedError('Необходима авторизация'));
   }
 
   const token = authorization.replace('Bearer ', '');
-  let payload;
 
   try {
-    payload = jwt.verify(token, 'big-daddy-caddy');
-  } catch (err) {
-    return res.status(401).send({ message: 'Необходима авторизация' });
-  }
+    const decodedToken = jwt.verify(token, 'big-daddy-caddy');
+    const { _id } = decodedToken;
 
-  req.user = payload;
-  next();
+    // eslint-disable-next-line no-undef
+    User.findById(_id)
+      // eslint-disable-next-line consistent-return
+      .then((user) => {
+        if (!user) {
+          return next(new NotFoundError('Пользователь не найден'));
+        }
+
+        req.user = user;
+        next();
+      })
+      .catch(() => {
+        next();
+      });
+  } catch (err) {
+    next(new UnauthorizedError('Необходима авторизация'));
+  }
 };
