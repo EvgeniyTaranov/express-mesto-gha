@@ -7,6 +7,7 @@ const cardRouter = require('./routes/cards');
 const NotFoundError = require('./errors/notFoundError');
 const { login, createUser } = require('./controllers/users');
 const { validateEmailAndPassword } = require('./middlewares/validation');
+const auth = require('./middlewares/auth');
 
 const INTERNAL_SERVER_ERROR = 500;
 const { PORT = 3000 } = process.env;
@@ -19,6 +20,8 @@ app.post('/signin', validateEmailAndPassword, login);
 app.post('/signup', validateEmailAndPassword, createUser);
 
 app.use(cookieParser());
+
+app.use(auth);
 
 app.use('/users', userRouter);
 app.use('/cards', cardRouter);
