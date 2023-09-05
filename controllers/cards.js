@@ -11,7 +11,7 @@ module.exports.getCards = (req, res, next) => {
     .catch(next);
 };
 
-module.exports.postCard = (req, res, next) => {
+module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
 
   const cardData = {
