@@ -24,20 +24,20 @@ const validateId = (Id) => {
   throw new BadRequestError(': invalid Id');
 };
 
-module.exports.validationUserInfo = celebrate({
+module.exports.validateProfileUpdate = celebrate({
   body: Joi.object().keys({
     name: Joi.string().required().min(2).max(30),
     about: Joi.string().required().min(2).max(30),
   }),
 });
 
-module.exports.validationUserAvatar = celebrate({
+module.exports.validateAvatarUpdate = celebrate({
   body: Joi.object().keys({
     avatar: Joi.string().required().custom(validateURL),
   }),
 });
 
-module.exports.validationEmailAndPassword = celebrate({
+module.exports.validateEmailAndPassword = celebrate({
   body: Joi.object().keys({
     email: Joi.string().required().custom(validateEmail),
     password: Joi.string().required().min(6),
@@ -47,20 +47,20 @@ module.exports.validationEmailAndPassword = celebrate({
   }),
 });
 
-module.exports.validationUserId = celebrate({
+module.exports.validateUserId = celebrate({
   params: Joi.object().keys({
     id: Joi.string().required().custom(validateId),
   }),
 });
 
-module.exports.validationCardInfo = celebrate({
+module.exports.validateCard = celebrate({
   body: Joi.object().keys({
     name: Joi.string().required().min(2).max(30),
     link: Joi.string().required().custom(validateURL),
   }),
 });
 
-module.exports.validationCardId = celebrate({
+module.exports.validateCardId = celebrate({
   params: Joi.object().keys({
     cardId: Joi.string().required().custom(validateId),
   }),
