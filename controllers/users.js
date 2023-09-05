@@ -1,9 +1,12 @@
+const validationError = require('mongoose').Error.ValidationError;
+const castError = require('mongoose').Error.CastError;
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const UnauthorizedError = require('../errors/unauthorizedError');
 const NotFoundError = require('../errors/notFoundError');
 const BadRequestError = require('../errors/badRequestError');
+const ConflictError = require('../errors/conflictError');
 
 module.exports.getUsers = (req, res, next) => {
   User.find({})
@@ -22,7 +25,7 @@ module.exports.getUserById = (req, res, next) => {
       res.status(200).send({ data: user });
     })
     .catch((error) => {
-      if (error.name === 'CastError' || error.name === 'ValidationError') {
+      if (error instanceof castError) {
         next(new BadRequestError('Некорректные данные или ID пользователя'));
       } else {
         next(new Error('Произошла ошибка'));
@@ -31,23 +34,38 @@ module.exports.getUserById = (req, res, next) => {
 };
 
 module.exports.createUser = (req, res, next) => {
-  const { email, password } = req.body;
-
-  bcrypt.hash(password, 10)
+  const {
+    name,
+    about,
+    avatar,
+    email,
+  } = req.body;
+  bcrypt.hash(req.body.password, 10)
     .then((hashedPassword) => {
-      User.create({ email, password: hashedPassword })
-        .then((user) => res.status(201).send({ data: user }))
+      User.create({
+        name,
+        about,
+        avatar,
+        email,
+        password: hashedPassword,
+      })
+        .then(((user) => {
+          const userWithoutPassword = user.toObject();
+          delete userWithoutPassword.password;
+          res.send({ data: userWithoutPassword });
+        }))
         .catch((error) => {
-          if (error.name === 'ValidationError') {
-            next(new BadRequestError('Переданы некорректные данные'));
+          if (error.code === 11000) {
+            next(new ConflictError('Данный email уже используется'));
+          }
+          if (error instanceof validationError) {
+            next(new BadRequestError('Ошибка при валидации'));
           } else {
-            next(new Error('Произошла ошибка'));
+            next(error);
           }
         });
     })
-    .catch(() => {
-      next(new Error('Произошла ошибка'));
-    });
+    .catch(next);
 };
 
 module.exports.updateProfile = (req, res, next) => {
@@ -67,7 +85,7 @@ module.exports.updateProfile = (req, res, next) => {
       }
     })
     .catch((error) => {
-      if (error.name === 'ValidationError') {
+      if (error instanceof validationError) {
         next(new BadRequestError('Переданы некорректные данные'));
       } else {
         next(error);
@@ -92,7 +110,7 @@ module.exports.updateAvatar = (req, res, next) => {
       }
     })
     .catch((error) => {
-      if (error.name === 'ValidationError') {
+      if (error instanceof validationError) {
         next(new BadRequestError('Переданы некорректные данные'));
       } else {
         next(error);
@@ -128,11 +146,11 @@ module.exports.login = (req, res, next) => {
           next(new Error('Произошла ошибка'));
         });
     })
-    .catch(() => {
-      next(new Error('Произошла ошибка'));
-    });
+    .catch(next);
 };
 
-module.exports.getUserMe = (req, res) => {
-  res.status(200).send({ data: req.user });
+module.exports.getUserMe = (req, res, next) => {
+  User.findById(req.user._id)
+    .then(((data) => res.send(data)))
+    .catch(next);
 };

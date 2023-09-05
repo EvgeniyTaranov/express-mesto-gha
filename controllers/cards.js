@@ -1,3 +1,5 @@
+const validationError = require('mongoose').Error.ValidationError;
+const castError = require('mongoose').Error.CastError;
 const Card = require('../models/card');
 const NotFoundError = require('../errors/notFoundError');
 const BadRequestError = require('../errors/badRequestError');
@@ -9,7 +11,7 @@ module.exports.getCards = (req, res, next) => {
     .catch(next);
 };
 
-module.exports.createCard = (req, res, next) => {
+module.exports.postCard = (req, res, next) => {
   const { name, link } = req.body;
 
   const cardData = {
@@ -19,8 +21,16 @@ module.exports.createCard = (req, res, next) => {
   };
 
   Card.create(cardData)
-    .then((card) => res.status(201).send({ data: card }))
-    .catch(next);
+    .then((card) => {
+      res.send({ data: card });
+    })
+    .catch((error) => {
+      if (error instanceof validationError) {
+        next(new BadRequestError('Ошибка при валидации'));
+      } else {
+        next(error);
+      }
+    });
 };
 
 module.exports.deleteCard = (req, res, next) => {
@@ -42,7 +52,7 @@ module.exports.deleteCard = (req, res, next) => {
           }
         })
         .catch((error) => {
-          if (error.name === 'CastError') {
+          if (error instanceof castError) {
             next(new BadRequestError('Некорректный формат ID карточки'));
           } else { next(error); }
         });
@@ -66,7 +76,7 @@ module.exports.likeCard = (req, res, next) => {
       return res.send({ data: card });
     })
     .catch((error) => {
-      if (error.name === 'CastError') {
+      if (error instanceof castError) {
         return next(new BadRequestError('Некорректный формат ID карточки'));
       }
       return next(new BadRequestError('Произошла ошибка'));
@@ -89,7 +99,7 @@ module.exports.dislikeCard = (req, res, next) => {
       return res.send({ data: card });
     })
     .catch((error) => {
-      if (error.name === 'CastError') {
+      if (error instanceof castError) {
         return next(new BadRequestError('Некорректный формат ID карточки'));
       }
       return next(new BadRequestError('Произошла ошибка'));
