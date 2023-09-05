@@ -5,7 +5,6 @@ const { errors } = require('celebrate');
 const userRouter = require('./routes/users');
 const cardRouter = require('./routes/cards');
 const NotFoundError = require('./errors/notFoundError');
-const auth = require('./middlewares/auth');
 const { login, createUser } = require('./controllers/users');
 
 const INTERNAL_SERVER_ERROR = 500;
@@ -19,8 +18,6 @@ app.post('/signin', login);
 app.post('/signup', createUser);
 
 app.use(cookieParser());
-
-app.use(auth);
 
 app.use('/users', userRouter);
 app.use('/cards', cardRouter);
