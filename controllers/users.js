@@ -8,9 +8,7 @@ const BadRequestError = require('../errors/badRequestError');
 module.exports.getUsers = (req, res, next) => {
   User.find({})
     .then((users) => res.status(200).send({ data: users }))
-    .catch(() => {
-      next(new Error('Произошла ошибка'));
-    });
+    .catch(next);
 };
 
 module.exports.getUserById = (req, res, next) => {
@@ -69,10 +67,10 @@ module.exports.updateProfile = (req, res, next) => {
       }
     })
     .catch((error) => {
-      if (error.name === 'ValidationError' || error.name === 'CastError') {
+      if (error.name === 'ValidationError') {
         next(new BadRequestError('Переданы некорректные данные'));
       } else {
-        next(new Error('Произошла ошибка'));
+        next(error);
       }
     });
 };
@@ -94,10 +92,10 @@ module.exports.updateAvatar = (req, res, next) => {
       }
     })
     .catch((error) => {
-      if (error.name === 'ValidationError' || error.name === 'CastError') {
+      if (error.name === 'ValidationError') {
         next(new BadRequestError('Переданы некорректные данные'));
       } else {
-        next(new Error('Произошла ошибка'));
+        next(error);
       }
     });
 };

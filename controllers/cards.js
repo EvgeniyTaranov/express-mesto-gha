@@ -6,7 +6,7 @@ const ForbiddenError = require('../errors/forbiddenError');
 module.exports.getCards = (req, res, next) => {
   Card.find({})
     .then((cards) => res.status(200).send({ data: cards }))
-    .catch(() => next(new BadRequestError('Произошла ошибка')));
+    .catch(next);
 };
 
 module.exports.createCard = (req, res, next) => {
@@ -20,38 +20,34 @@ module.exports.createCard = (req, res, next) => {
 
   Card.create(cardData)
     .then((card) => res.status(201).send({ data: card }))
-    .catch(() => next(new BadRequestError('Ошибка при создании карточки')));
+    .catch(next);
 };
 
 module.exports.deleteCard = (req, res, next) => {
   const { cardId } = req.params;
-
   Card.findById(cardId)
     // eslint-disable-next-line consistent-return
     .then((card) => {
-      if (!card) {
-        return next(new NotFoundError('Карточка не найдена'));
+      if (card === null) {
+        return next(new NotFoundError('Карточка с таким id не найдена'));
       }
-
-      if (card.owner.toString() !== req.user._id) {
-        return next(new ForbiddenError('Вы не можете удалить чужую карточку'));
+      if (!(card.owner.toString() === req.user._id)) {
+        return next(new ForbiddenError('Вы не можете удалять чужие карточки'));
       }
-
-      card.remove()
-        .then(() => res.status(200).send({ data: card }))
+      Card.findByIdAndRemove(cardId)
+        // eslint-disable-next-line consistent-return
+        .then((data) => {
+          if (data) {
+            return res.send({ message: 'Карточка удалена' });
+          }
+        })
         .catch((error) => {
           if (error.name === 'CastError') {
-            return next(new BadRequestError('Некорректный формат ID карточки'));
-          }
-          return next(new BadRequestError('Произошла ошибка'));
+            next(new BadRequestError('Некорректный формат ID карточки'));
+          } else { next(error); }
         });
     })
-    .catch((error) => {
-      if (error.name === 'CastError') {
-        return next(new BadRequestError('Некорректный формат ID карточки'));
-      }
-      return next(new BadRequestError('Произошла ошибка'));
-    });
+    .catch(next);
 };
 
 module.exports.likeCard = (req, res, next) => {

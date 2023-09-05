@@ -40,7 +40,7 @@ module.exports.validateAvatarUpdate = celebrate({
 module.exports.validateCard = celebrate({
   [Segments.BODY]: Joi.object().keys({
     name: Joi.string().required(),
-    link: Joi.string().required().uri(),
+    link: Joi.string().required().pattern(/^https?:\/\/\S+$/),
   }),
 });
 
