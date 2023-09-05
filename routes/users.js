@@ -4,14 +4,14 @@ const {
 } = require('../controllers/users');
 
 const {
-  validateUserId,
-  validateProfileUpdate,
-  validateAvatarUpdate,
+  validationUserId,
+  validationUserInfo,
+  validationUserAvatar,
 } = require('../middlewares/validation');
 
 userRouter.get('/', getUsers);
-userRouter.get('/:id', validateUserId, getUserById);
-userRouter.patch('/me', validateProfileUpdate, updateProfile);
-userRouter.patch('/me/avatar', validateAvatarUpdate, updateAvatar);
+userRouter.get('/:id', validationUserId, getUserById);
+userRouter.patch('/me', validationUserInfo, updateProfile);
+userRouter.patch('/me/avatar', validationUserAvatar, updateAvatar);
 
 module.exports = userRouter;

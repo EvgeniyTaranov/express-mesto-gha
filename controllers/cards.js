@@ -1,13 +1,14 @@
 const validationError = require('mongoose').Error.ValidationError;
 const castError = require('mongoose').Error.CastError;
 const Card = require('../models/card');
-const NotFoundError = require('../errors/notFoundError');
+
 const BadRequestError = require('../errors/badRequestError');
+const NotFoundError = require('../errors/notFoundError');
 const ForbiddenError = require('../errors/forbiddenError');
 
 module.exports.getCards = (req, res, next) => {
   Card.find({})
-    .then((cards) => res.status(200).send({ data: cards }))
+    .then((data) => res.send(data))
     .catch(next);
 };
 
@@ -24,11 +25,11 @@ module.exports.createCard = (req, res, next) => {
     .then((card) => {
       res.send({ data: card });
     })
-    .catch((error) => {
-      if (error instanceof validationError) {
+    .catch((err) => {
+      if (err instanceof validationError) {
         next(new BadRequestError('Ошибка при валидации'));
       } else {
-        next(error);
+        next(err);
       }
     });
 };
@@ -51,57 +52,52 @@ module.exports.deleteCard = (req, res, next) => {
             return res.send({ message: 'Карточка удалена' });
           }
         })
-        .catch((error) => {
-          if (error instanceof castError) {
-            next(new BadRequestError('Некорректный формат ID карточки'));
-          } else { next(error); }
+        .catch((err) => {
+          if (err instanceof castError) {
+            next(new BadRequestError('Передан некорректный id карточки'));
+          } else { next(err); }
         });
     })
     .catch(next);
 };
 
 module.exports.likeCard = (req, res, next) => {
-  const { cardId } = req.params;
-
   Card.findByIdAndUpdate(
-    cardId,
+    req.params.cardId,
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
     .populate('owner')
     .then((card) => {
-      if (!card) {
-        return next(new NotFoundError('Карточка не найдена'));
+      if (card) {
+        res.send({ data: card });
+      } else {
+        next(new NotFoundError('Карточка с таким id не найдена'));
       }
-      return res.send({ data: card });
     })
-    .catch((error) => {
-      if (error instanceof castError) {
-        return next(new BadRequestError('Некорректный формат ID карточки'));
+    .catch((err) => {
+      if (err instanceof castError) {
+        next(new BadRequestError('Передан некорректный id карточки'));
+      } else {
+        next(err);
       }
-      return next(new BadRequestError('Произошла ошибка'));
     });
 };
 
 module.exports.dislikeCard = (req, res, next) => {
-  const { cardId } = req.params;
-
-  Card.findByIdAndUpdate(
-    cardId,
-    { $pull: { likes: req.user._id } },
-    { new: true },
-  )
-    .populate('owner')
+  Card.findByIdAndUpdate(req.params.cardId, { $pull: { likes: req.user._id } }, { new: true })
     .then((card) => {
-      if (!card) {
-        return next(new NotFoundError('Карточка не найдена'));
+      if (card) {
+        res.send({ data: card });
+      } else {
+        next(new NotFoundError('Карточка с таким id не найдена'));
       }
-      return res.send({ data: card });
     })
-    .catch((error) => {
-      if (error instanceof castError) {
-        return next(new BadRequestError('Некорректный формат ID карточки'));
+    .catch((err) => {
+      if (err instanceof castError) {
+        next(new BadRequestError('Передан некорректный id карточки'));
+      } else {
+        next(err);
       }
-      return next(new BadRequestError('Произошла ошибка'));
     });
 };

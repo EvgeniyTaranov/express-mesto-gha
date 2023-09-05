@@ -17,13 +17,11 @@ app.use(express.json());
 
 app.post('/signin', login);
 app.post('/signup', createUser);
-
+app.use(cookieParser());
 app.use(auth);
 
 app.use('/users', userRouter);
 app.use('/cards', cardRouter);
-
-app.use(cookieParser());
 
 app.use('*', (req, res, next) => {
   next(new NotFoundError('Неверный путь'));
