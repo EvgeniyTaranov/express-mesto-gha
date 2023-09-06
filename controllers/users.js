@@ -6,6 +6,7 @@ const User = require('../models/user');
 const BadRequestError = require('../errors/badRequestError');
 const NotFoundError = require('../errors/notFoundError');
 const ConflictError = require('../errors/conflictError');
+const UnauthorizedError = require('../errors/unauthorizedError');
 
 module.exports.getUsers = (req, res, next) => {
   User.find({})
@@ -93,24 +94,37 @@ module.exports.updateAvatar = (req, res, next) => {
     });
 };
 
-module.exports.login = (req, res, next) => {
-  const { email, password } = req.body;
-  User.findUserByCredentials(email, password)
-    .then((user) => {
-      const token = jwt.sign(
-        { _id: user._id },
-        'big-daddy-caddy',
-        { expiresIn: '7d' },
-      );
-      res.cookie('jwt', token, {
-        maxAge: 3600000 * 24 * 7,
-        httpOnly: true,
-        sameSite: true,
-      });
-      res.send({ jwt: token })
-        .end();
-    })
-    .catch(next);
+module.exports.login = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email }).select('+password');
+
+    if (!user) {
+      throw new UnauthorizedError('Неправильный email или пароль');
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedError('Неправильный email или пароль');
+    }
+
+    const token = jwt.sign(
+      { _id: user._id },
+      'big-daddy-caddy',
+      { expiresIn: '7d' },
+    );
+
+    res.cookie('jwt', token, {
+      maxAge: 3600000 * 24 * 7,
+      httpOnly: true,
+      sameSite: true,
+    });
+
+    res.send({ jwt: token });
+  } catch (err) {
+    next(err);
+  }
 };
 
 module.exports.getUserMe = (req, res, next) => {
