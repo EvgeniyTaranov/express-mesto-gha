@@ -37,7 +37,14 @@ module.exports.validateAvatarUpdate = celebrate({
   }),
 });
 
-module.exports.validateEmailAndPassword = celebrate({
+module.exports.validateSignIn = celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().required().custom(validateEmail),
+    password: Joi.string().required().min(6),
+  }),
+});
+
+module.exports.validateSignUp = celebrate({
   body: Joi.object().keys({
     email: Joi.string().required().custom(validateEmail),
     password: Joi.string().required().min(6),

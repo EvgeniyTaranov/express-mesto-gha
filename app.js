@@ -6,7 +6,7 @@ const userRouter = require('./routes/users');
 const cardRouter = require('./routes/cards');
 const NotFoundError = require('./errors/notFoundError');
 const { login, createUser } = require('./controllers/users');
-const { validateEmailAndPassword } = require('./middlewares/validation');
+const { validateSignIn, validateSignUp } = require('./middlewares/validation');
 const auth = require('./middlewares/auth');
 
 const INTERNAL_SERVER_ERROR = 500;
@@ -16,8 +16,8 @@ const app = express();
 
 app.use(express.json());
 
-app.post('/signin', validateEmailAndPassword, login);
-app.post('/signup', validateEmailAndPassword, createUser);
+app.post('/signin', validateSignIn, login);
+app.post('/signup', validateSignUp, createUser);
 
 app.use(cookieParser());
 

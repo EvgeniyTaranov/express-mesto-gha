@@ -37,28 +37,25 @@ module.exports.createCard = (req, res, next) => {
 module.exports.deleteCard = (req, res, next) => {
   const { cardId } = req.params;
   Card.findById(cardId)
-    // eslint-disable-next-line consistent-return
+    .orFail(new NotFoundError(`Карточка с id '${cardId}' не найдена`))
     .then((card) => {
-      if (card === null) {
-        return next(new NotFoundError('Карточка с таким id не найдена'));
-      }
       if (!(card.owner.toString() === req.user._id)) {
         return next(new ForbiddenError('Вы не можете удалять чужие карточки'));
       }
-      Card.findByIdAndRemove(cardId)
+      return Card.findByIdAndRemove(cardId)
         // eslint-disable-next-line consistent-return
         .then((data) => {
           if (data) {
             return res.send({ message: 'Карточка удалена' });
           }
         })
-        .catch((err) => {
-          if (err instanceof castError) {
-            next(new BadRequestError('Передан некорректный id карточки'));
-          } else { next(err); }
-        });
+        .catch(next);
     })
-    .catch(next);
+    .catch((err) => {
+      if (err instanceof castError) {
+        next(new BadRequestError('Передан некорректный id карточки'));
+      } else { next(err); }
+    });
 };
 
 module.exports.likeCard = (req, res, next) => {
